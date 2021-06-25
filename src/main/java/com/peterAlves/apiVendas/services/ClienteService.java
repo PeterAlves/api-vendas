@@ -16,11 +16,14 @@ import org.springframework.stereotype.Service;
 import com.peterAlves.apiVendas.domain.Cidade;
 import com.peterAlves.apiVendas.domain.Cliente;
 import com.peterAlves.apiVendas.domain.Endereco;
+import com.peterAlves.apiVendas.domain.enums.Perfil;
 import com.peterAlves.apiVendas.domain.enums.TipoCliente;
 import com.peterAlves.apiVendas.dto.ClienteDTO;
 import com.peterAlves.apiVendas.dto.ClienteNewDTO;
 import com.peterAlves.apiVendas.repositories.ClienteRepository;
 import com.peterAlves.apiVendas.repositories.EnderecoRepository;
+import com.peterAlves.apiVendas.security.UserSS;
+import com.peterAlves.apiVendas.services.exceptions.AuthorizationException;
 import com.peterAlves.apiVendas.services.exceptions.DataIntegrityException;
 import com.peterAlves.apiVendas.services.exceptions.ObjectNotFoundException;
 
@@ -37,6 +40,12 @@ public class ClienteService {
 	private BCryptPasswordEncoder pe;
 
 	public Cliente find(Integer id) {
+
+		UserSS user = UserService.authenticated();
+		if (user == null || !user.hasRole(Perfil.ADMIN) && !id.equals(user.getId())) {
+			throw new AuthorizationException("Acesso negado");
+		}
+
 		Optional<Cliente> obj = repo.findById(id);
 		return obj.orElseThrow(() -> new ObjectNotFoundException(
 				"Objeto não encontrado! Id: " + id + ", Tipo: " + Cliente.class.getName()));
